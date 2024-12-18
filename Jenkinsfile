@@ -1,16 +1,23 @@
 pipeline {
     agent any
     environment {
+        // Use the stored GitHub token from Jenkins Credentials
+        GITHUB_TOKEN = credentials('github-pat')  // 'github-pat' is the ID of the stored credential
         REPO_URL = 'https://github.com/nuhaqadeer/chef-repo.git'  // Replace with your GitHub repo URL
         CHEF_HOME = '/path/to/chef'  // Replace with your Chef setup path if needed
     }
     stages {
         stage('Clone Repository') {
             steps {
-                git branch: 'main', url: "$REPO_URL"  // Clones the repository
+                script {
+                    // Clone the repository using the GitHub token for authentication
+                    withCredentials([usernamePassword(credentialsId: 'github-pat', usernameVariable: 'USERNAME', passwordVariable: 'GITHUB_TOKEN')]) {
+                        sh 'git clone https://$USERNAME:$GITHUB_TOKEN@github.com/nuhaqadeer/chef-repo.git'
+                    }
+                }
             }
         }
-        
+
         stage('Install Dependencies') {
             steps {
                 script {
@@ -19,7 +26,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Run Chef Client') {
             steps {
                 script {
@@ -28,7 +35,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Deploy') {
             steps {
                 script {
